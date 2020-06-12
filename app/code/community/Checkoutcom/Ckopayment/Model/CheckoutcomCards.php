@@ -84,6 +84,8 @@ class Checkoutcom_Ckopayment_Model_CheckoutcomCards extends Mage_Payment_Model_M
         $requestData = Mage::app()->getRequest()->getParam('payment');
         $session = Mage::getSingleton('ckopayment/session_quote');
         $isSaveCard = false;
+        $identification = "";
+        $billingName = "";
 
         // Check if card token exist
         if (empty($requestData['cko_card_token'])) {
@@ -101,6 +103,18 @@ class Checkoutcom_Ckopayment_Model_CheckoutcomCards extends Mage_Payment_Model_M
                 //Throw exception and stop order process
                 Mage::throwException($message);
             }
+        }
+
+        if(empty($requestData['cko_dlocal_id'])) {
+            $message = "The ID Document can not empty.";
+
+            // Log error in var/log/checkoutcomframes.log
+            Mage::log($message, null, $this->_code . '.log');
+
+            //Throw exception and stop order process
+            Mage::throwException($message);
+        } else {
+           $identification =  $requestData['cko_dlocal_id'];
         }
 
         $isSaveCardCheck = false;
@@ -125,15 +139,19 @@ class Checkoutcom_Ckopayment_Model_CheckoutcomCards extends Mage_Payment_Model_M
             $currencyCode = Mage::app()->getStore()->getCurrentCurrencyCode();
         }
 
+        if(!empty($requestData['cko_customer_name'])) {
+            $billingName = $requestData['cko_customer_name'];
+        }
+
         // Format amount to cent
         $amountCent = Mage::getModel('ckopayment/checkoutcomUtils')->valueToDecimal($order->getGrandTotal(), $currencyCode);
 
         if ($isSaveCard) {
             // Charge request params with source id
-            $requestParam = $this->_getRequestParam($requestData, $amountCent, $currencyCode, $quoteId, $orderId, $isSaveCard);
+            $requestParam = $this->_getRequestParam($requestData, $amountCent, $currencyCode, $quoteId, $orderId, $isSaveCard, $identification, $billingName);
         } else {
             // Charge request params with card token
-            $requestParam = $this->_getRequestParam($requestData, $amountCent, $currencyCode, $quoteId, $orderId);
+            $requestParam = $this->_getRequestParam($requestData, $amountCent, $currencyCode, $quoteId, $orderId, null, $identification, $billingName);
         }
 
         $environment =  Mage::getModel('ckopayment/checkoutcomConfig')->getEnvironment() == 'sandbox' ? true : false;
@@ -490,7 +508,7 @@ class Checkoutcom_Ckopayment_Model_CheckoutcomCards extends Mage_Payment_Model_M
      * @param $quoteId
      * @return Payment
      */
-    private function _getRequestParam($token, $amount, $currencyCode, $quoteId, $orderId, $isSaveCard = null)
+    private function _getRequestParam($token, $amount, $currencyCode, $quoteId, $orderId, $isSaveCard = null, $identification, $billingName)
     {
         $session = Mage::getSingleton('ckopayment/session_quote');
         $quote = Mage::getModel('ckopayment/checkoutcomUtils')->getQuote($quoteId);
@@ -663,6 +681,17 @@ class Checkoutcom_Ckopayment_Model_CheckoutcomCards extends Mage_Payment_Model_M
 
         $metadata = array(
             'udf5' => $udf5
+        );
+
+        $payment->processing  = array(
+            'dlocal' => array(
+                'country'  => "MX",
+                'payer' => array(
+                    'document'  => $identification,
+                    'name'  => $billingName,
+                    'email'  =>  $email 
+                )
+            )
         );
 
 

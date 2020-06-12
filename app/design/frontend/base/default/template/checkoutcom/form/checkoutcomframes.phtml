@@ -1,11 +1,17 @@
 <div class="form-list" id="payment_form_<?php echo $this->getMethodCode() ?>">
 
+
     <!-- hidden input field to send card token   -->
     <input type="hidden" id="cko-card-token" name="payment[cko_card_token]" value="" />
     <input type="hidden" id="cko-card-bin" name="payment[cko_card_bin]" value="" />
+    <input type="hidden" id="cko-dlocal-id" name="payment[cko_dlocal_id]" value="" />
+    <input type="hidden" id="cko-customer-name" name="payment[cko_customer_name]" value="" />
 
     <div class="cko-container" id="cko-container" style="display: none">
-
+    <div class="cko-dlocal-id-container">
+    <label for="cko-dlocal-id-number" class="required"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">ID Number (CURP)    </font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">*</font></font></em></label>
+        <input type="text" id="cko-dlocal-id-number"  placeholder="123456789"/>
+    </div>
         <!-- check if customer is logged in and if saved card is enable-->
         <?php if ($this->isCustomerLoggedIn() && $this->getIsSaveCardEnable()): ?>
         <div id="save-cards" class="save-cards" style="padding-left: 20px;">
@@ -214,6 +220,10 @@
             }
         });
 
+        jQuery('#cko-dlocal-id-number').on('input', function(e) {
+            document.getElementById('cko-dlocal-id').value = e.target.value
+        });
+
         var loader = document.getElementById('cko-loader');
 
         // only show Checkout.Frames when the method is selected
@@ -351,6 +361,7 @@
                     customerName = document.getElementById("billing:firstname").value + ' ' + document.getElementById("billing:lastname").value;
                 }
 
+                document.getElementById("cko-customer-name").value = customerName
                 Frames.cardholder.name = customerName ;
                 Frames.submitCard();
             }
@@ -434,6 +445,18 @@
             jQuery(".frames-container").hide();
             jQuery("#cko-save-card-area").hide();
         }
+
+        function setName () {
+            var customerName = "<?php echo $this->getCustomerName(); ?>";
+
+            if (customerName.length <= 1) {
+                customerName = document.getElementById("billing:firstname").value + ' ' + document.getElementById("billing:lastname").value;
+            }
+            document.getElementById("cko-customer-name").value = customerName
+        }
+
+        // Set name asd form value to pass it to the server
+        setName();
     </script>
 
 </div>
