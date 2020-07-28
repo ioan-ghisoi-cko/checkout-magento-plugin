@@ -156,8 +156,7 @@ class Checkoutcom_Ckopayment_ApiController extends Mage_Core_Controller_Front_Ac
                 $payment->setTransactionId($id)
                     ->setShouldCloseParentTransaction(0)
                     ->setAdditionalInformation('ckoPaymentId', $response->id)
-                    ->setIsTransactionClosed(0)
-                    ->registerAuthorizationNotification($amount);
+                    ->setIsTransactionClosed(0);
 
                 // Payment Flagged status from config
                 $flagStatus = Mage::getModel('ckopayment/checkoutcomConfig')->getFlaggedOrderStatus();
